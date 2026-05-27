@@ -29,13 +29,10 @@ public class CamionService {
 
         return camionRepository
                 .findAll(Sort.by(Sort.Direction.ASC, "id"))
-
                 // Convierte lista a Stream
                 .stream()
-
                 // Convierte Entity -> DTO
                 .map(camionMapper::toResponseDTO)
-
                 // Convierte nuevamente a lista
                 .toList();
     }
@@ -44,48 +41,31 @@ public class CamionService {
     public CamionResponseDTO getById(Long id) {
 
         Camion camion = camionRepository.findById(id)
-
                 // Error si no existe
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Camión no encontrado con el ID: " + id));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Camión no encontrado con el ID: " + id));
         return camionMapper.toResponseDTO(camion);
     }
 
     // 3. GUARDAR NUEVO CAMIÓN
     public CamionResponseDTO saveCamion(CamionRequestDTO dto) {
-
         // Evita códigos duplicados
         if (camionRepository.findByCodigo(dto.getCodigo()).isPresent()) {
-
-            throw new IllegalArgumentException(
-                    "El código '" + dto.getCodigo()
-                            + "' ya se encuentra registrado.");
+            throw new IllegalArgumentException("El código '" + dto.getCodigo() + "' ya se encuentra registrado.");
         }
-
         // DTO -> Entity
         Camion camion = camionMapper.toEntity(dto);
-
         // Guarda en PostgreSQL
-        Camion camionGuardado =
-                camionRepository.save(camion);
-
+        Camion camionGuardado = camionRepository.save(camion);
         // Entity -> DTO
         return camionMapper.toResponseDTO(camionGuardado);
     }
 
     // 4. ELIMINAR CAMIÓN
     public void deleteCamion(Long id) {
-
         // Verifica existencia
         if (!camionRepository.existsById(id)) {
-
-            throw new ResourceNotFoundException(
-                    "No se puede eliminar. Camión no encontrado con el ID: "
-                            + id);
+            throw new ResourceNotFoundException("No se puede eliminar. Camión no encontrado con el ID: " + id);
         }
-
         camionRepository.deleteById(id);
     }
 
@@ -95,29 +75,39 @@ public class CamionService {
             CamionRequestDTO dto) {
 
         // Busca camión existente
-        Camion camionExistente =
-                camionRepository.findById(id)
-
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "No se puede actualizar. Camión no encontrado con el ID: "
-                                                + id));
-
+        Camion camionExistente = camionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se puede actualizar. Camión no encontrado con el ID: " + id));
         // Actualiza atributos
         camionExistente.setCodigo(dto.getCodigo());
-
         camionExistente.setModelo(dto.getModelo());
-
         camionExistente.setCapacidadCarga(dto.getCapacidadCarga());
-
         camionExistente.setEstadoOperativo(dto.getEstadoOperativo());
-
         camionExistente.setSector(dto.getSector());
-
         // Guarda cambios
-        Camion camionActualizado =
-                camionRepository.save(camionExistente);
-
+        Camion camionActualizado = camionRepository.save(camionExistente);
         return camionMapper.toResponseDTO(camionActualizado);
+    }
+
+    // 6. OBTENER POR CÓDIGO ÚNICO
+    public CamionResponseDTO getByCodigo(String codigo) {
+        Camion camion = camionRepository.findByCodigo(codigo)
+                .orElseThrow(() -> new ResourceNotFoundException("Camión no encontrado con el código: " + codigo));
+        return camionMapper.toResponseDTO(camion);
+    }
+
+    // 7. FILTRAR POR ESTADO
+    public List<CamionResponseDTO> getByEstado(String estado) {
+        return camionRepository.findByEstadoOperativo(estado)
+                .stream()
+                .map(camionMapper::toResponseDTO)
+                .toList();
+    }
+
+    // 8. FILTRAR POR SECTOR
+    public List<CamionResponseDTO> getBySector(String sector) {
+        return camionRepository.findBySector(sector)
+                .stream()
+                .map(camionMapper::toResponseDTO)
+                .toList();
     }
 }
