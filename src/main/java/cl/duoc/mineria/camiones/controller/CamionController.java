@@ -75,4 +75,5 @@ public class CamionController {
     public ResponseEntity<List<CamionResponseDTO>> getCamionesBySector(@PathVariable String sector) {
         return ResponseEntity.ok(camionService.getBySector(sector));
     }
+    
 }

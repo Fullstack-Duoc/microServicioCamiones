@@ -27,66 +27,54 @@ public class GlobalExceptionHandler {
             WebRequest webRequest) {
 
         ErrorDetalle errorDetalle = ErrorDetalle.builder()
-
                 .timestamp(LocalDateTime.now())
-
                 .mensaje(exception.getMessage())
-
                 .detalles(webRequest.getDescription(false))
-
                 .build();
-
-        return new ResponseEntity<>(
-                errorDetalle,
-                HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errorDetalle, HttpStatus.NOT_FOUND);
     }
 
     // 2. MANEJO DE ERRORES DE VALIDACIÓN
     @ExceptionHandler(MethodArgumentNotValidException.class)
-
     public ResponseEntity<Object> manejarValidaciones(
             MethodArgumentNotValidException exception,
             WebRequest webRequest) {
-
-        Map<String, String> erroresCampos =
-                new HashMap<>();
-
+        Map<String, String> erroresCampos = new HashMap<>();
         // Recorre todos los errores
         exception.getBindingResult()
                 .getAllErrors()
                 .forEach((error) -> {
-
-                    String nombreCampo =
-                            ((FieldError) error).getField();
-
-                    String mensajeError =
-                            error.getDefaultMessage();
-
-                    erroresCampos.put(
-                            nombreCampo,
-                            mensajeError);
+                    String nombreCampo = ((FieldError) error).getField();
+                    String mensajeError = error.getDefaultMessage();
+                    erroresCampos.put(nombreCampo, mensajeError);
                 });
 
         ErrorDetalle errorDetalle = ErrorDetalle.builder()
-
                 .timestamp(LocalDateTime.now())
-
-                .mensaje(
-                        "Los datos enviados no son válidos")
-
-                .detalles(
-                        erroresCampos.toString())
-
+                .mensaje("Los datos enviados no son válidos")
+                .detalles(erroresCampos.toString())
                 .build();
 
-        return new ResponseEntity<>(
-                errorDetalle,
-                HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorDetalle, HttpStatus.BAD_REQUEST);
     }
 
-    // 3. MANEJO DE ERRORES GENERALES
-    @ExceptionHandler(Exception.class)
+    // 3. MANEJO DE ARGUMENTOS ILEGALES (Ej: Código duplicado)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorDetalle> manejarIllegalArgumentException(
+            IllegalArgumentException exception,
+            WebRequest webRequest) {
 
+        ErrorDetalle errorDetalle = ErrorDetalle.builder()
+                .timestamp(LocalDateTime.now())
+                .mensaje("Error en la solicitud: " + exception.getMessage())
+                .detalles(webRequest.getDescription(false))
+                .build();
+
+        return new ResponseEntity<>(errorDetalle, HttpStatus.BAD_REQUEST);
+    }
+
+    // 4. MANEJO DE ERRORES GENERALES
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDetalle> manejarGlobalException(
             Exception exception,
             WebRequest webRequest) {
@@ -94,18 +82,10 @@ public class GlobalExceptionHandler {
         ErrorDetalle errorDetalle = ErrorDetalle.builder()
 
                 .timestamp(LocalDateTime.now())
-
-                .mensaje(
-                        "Ocurrió un error interno en el servidor: "
-                                + exception.getMessage())
-
-                .detalles(
-                        webRequest.getDescription(false))
-
+                .mensaje("Ocurrió un error interno en el servidor: " + exception.getMessage())
+                .detalles(webRequest.getDescription(false))
                 .build();
 
-        return new ResponseEntity<>(
-                errorDetalle,
-                HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(errorDetalle, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
